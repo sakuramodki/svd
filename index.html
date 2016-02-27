@@ -2,17 +2,21 @@
 <html>
  <head>
   <title>Self Camera</title>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+  <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js'></script>
  </head>
  <body>
-   <video id="video" width="400" height="300" autoplay="1" ></video>
-   <canvas id="c" width="480px" height="270px"></canvas>
+   <div id='effected' style='float:left;'></div>
+   <video id='video' width='490' height='360' autoplay='1' ></video>
+   <br/>
+   param1: <input type='range' id='param1' name='param1' min='0.0' max='1.0' step='any'/><div id='param1val'></div><br/>
+   param2: <input type='range' id='param2' name='param2' min='0.0' max='1.0' step='any'/><div id='param2val'></div><br/>
+   param3: <input type='range' id='param3' name='param3' min='0.0' max='1.0' step='any'/><div id='param3val'></div><br/>
+   <input type="button" id='fullscreen' value='fullscreen'/>
  </body>
- <script type="text/javascript">
+ <script type='text/javascript'>
     navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || window.navigator.mozGetUserMedia;
     window.URL = window.URL || window.webkitURL;
     var video = document.getElementById('video');
-	console.log(video);
     var localStream = null;
     navigator.getUserMedia({video: true, audio: false}, function(stream) { // for success case
 		 video.src = window.URL.createObjectURL(stream);
@@ -23,9 +27,16 @@
     );
 </script>
 <script src='http://evanw.github.io/glfx.js/glfx.js'></script>
-<script type="text/javascript">
+<script type='text/javascript'>
+var subwindow = window.open("about:blank", "_blank", "height=30, width=40");
+subwindow.document.write('<HTML><BODY><center><canvas id="subcanvas" style="background-color:black"></canvs><center></BODY><HTML`>');
+window.focus();
+$(window).unload(function () {
+	alert();
+	subwindow.close();
+});
+
 $(document).ready(function() {
-    // try to create a WebGL canvas (will fail if WebGL isn't supported)
     try {
         var canvas = fx.canvas();
     } catch (e) {
@@ -33,20 +44,48 @@ $(document).ready(function() {
         return;
     }
 
-    // convert the image to a texture
-    var image = document.getElementById('video');
+	$('#effected').prepend(canvas);
 
 	window.setInterval(function () {
-		var image = document.getElementById('video');
-		var texture = canvas.texture(image);
-		canvas.draw(texture).lensBlur(100, 0.1, 0.5).update();
-		texture.loadContentsOf(image);
-	},1);
+		var video   = $('#video'),
+		    fs      = $('#fsobj'),
+		    texture = canvas.texture(video.get(0)),
+		    param1  = $('#param1').val(),
+		    param2  = $('#param2').val(),
+		    param3  = $('#param3').val();
+		canvas.draw(texture).brightnessContrast((param1-0.5)*2, (param2-0.5)*2, 0).update();
 
-    // apply the ink filter
+		var png = $('#effected canvas').get(0).toDataURL();
+		var img = new Image();
+		img.src = png;
+		var subcanvs = subwindow.document.body.getElementsByTagName('canvas')[0];
+		subcanvs.width = screen.width;
+		subcanvs.height = screen.height;
+		var amp = Math.min(screen.width/img.width , screen.height/img.height)
+		var ctx = subcanvs.getContext('2d');
+		ctx.drawImage(img, 0,0,amp*img.width, amp*img.height);
+	},1000/60);
+});
 
-    // replace the image with the canvas
-    image.parentNode.insertBefore(canvas, image);
+// parameter event
+$(document).ready( function () {
+	var ids = ['param1', 'param2', 'param3'];
+	for (var i in ids) {
+		var id = ids[i];
+		$('#'+id).on('input', function ()	{
+			var id = $(this).attr('id');
+			$('#'+id+'val').html('val:' + $(this).val());
+		});
+	};
+	$('#fullscreen').click(function () {
+		var subcanvs = subwindow.document.body.getElementsByTagName('canvas')[0];
+		var x = subcanvs;
+		if (x.webkitRequestFullScreen) {
+			x.webkitRequestFullScreen();
+		} else {
+			x.requestFullScreen();
+		}
+	});
 });
    </script>
 </html>
