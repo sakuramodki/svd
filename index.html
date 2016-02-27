@@ -2,25 +2,51 @@
 <html>
  <head>
   <title>Self Camera</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
  </head>
  <body>
-   <video id="myVideo" width="400" height="300" autoplay="1" ></video>
- 
-   <script type="text/javascript">
+   <video id="video" width="400" height="300" autoplay="1" ></video>
+   <canvas id="c" width="480px" height="270px"></canvas>
+ </body>
+ <script type="text/javascript">
     navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || window.navigator.mozGetUserMedia;
     window.URL = window.URL || window.webkitURL;
- 
-    var video = document.getElementById('myVideo');
+    var video = document.getElementById('video');
+	console.log(video);
     var localStream = null;
-    navigator.getUserMedia({video: true, audio: false}, 
-     function(stream) { // for success case
-      console.log(stream);
-      video.src = window.URL.createObjectURL(stream);
-     },
-     function(err) { // for error case
-      console.log(err);
-     }
+    navigator.getUserMedia({video: true, audio: false}, function(stream) { // for success case
+		 video.src = window.URL.createObjectURL(stream);
+		},
+		function(err) { // for error case
+		   console.log(err);
+		}
     );
+</script>
+<script src='http://evanw.github.io/glfx.js/glfx.js'></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    // try to create a WebGL canvas (will fail if WebGL isn't supported)
+    try {
+        var canvas = fx.canvas();
+    } catch (e) {
+        alert(e);
+        return;
+    }
+
+    // convert the image to a texture
+    var image = document.getElementById('video');
+
+	window.setInterval(function () {
+		var image = document.getElementById('video');
+		var texture = canvas.texture(image);
+		canvas.draw(texture).lensBlur(100, 0.1, 0.5).update();
+		texture.loadContentsOf(image);
+	},1);
+
+    // apply the ink filter
+
+    // replace the image with the canvas
+    image.parentNode.insertBefore(canvas, image);
+});
    </script>
- </body>
 </html>
